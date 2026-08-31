@@ -44,14 +44,14 @@ resource "aws_security_group" "redis_sg" {
 resource "aws_elasticache_cluster" "redis" {
   cluster_id           = "ai-travel-redis"
   engine               = "redis"
-  engine_version       = "7.1"           # Redis 최신 안정 버전
+  engine_version       = "7.1"            # Redis 최신 안정 버전
   node_type            = "cache.t3.micro" # 비용 절감형 인스턴스
-  num_cache_nodes      = 1               # 싱글 노드 구성
+  num_cache_nodes      = 1                # 싱글 노드 구성
   parameter_group_name = "default.redis7"
   port                 = 6379
 
-  subnet_group_name    = aws_elasticache_subnet_group.redis_subnet_group.name
-  security_group_ids   = [aws_security_group.redis_sg.id]
+  subnet_group_name  = aws_elasticache_subnet_group.redis_subnet_group.name
+  security_group_ids = [aws_security_group.redis_sg.id]
 
   tags = {
     Name = "ai-travel-redis-cluster"

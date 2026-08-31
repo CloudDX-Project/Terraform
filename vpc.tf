@@ -85,6 +85,7 @@ resource "aws_eip" "nat_b" {
 resource "aws_nat_gateway" "nat_a" {
   allocation_id = aws_eip.nat_a.id
   subnet_id     = aws_subnet.public_a.id
+  depends_on    = [aws_route_table_association.public_a]
 
   tags = {
     Name = "ai-travel-nat-gw-a"
@@ -94,6 +95,7 @@ resource "aws_nat_gateway" "nat_a" {
 resource "aws_nat_gateway" "nat_b" {
   allocation_id = aws_eip.nat_b.id
   subnet_id     = aws_subnet.public_b.id
+  depends_on    = [aws_route_table_association.public_b]
 
   tags = {
     Name = "ai-travel-nat-gw-b"

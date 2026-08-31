@@ -43,25 +43,25 @@ resource "aws_security_group" "rds_sg" {
 # 3. Amazon RDS for MariaDB (Multi-AZ)
 # ==========================================
 resource "aws_db_instance" "mariadb" {
-  identifier             = "ai-travel-mariadb"
-  engine                 = "mariadb"
-  engine_version         = "10.11"        # 10.11 최신 안정화 버전
-  instance_class         = "db.t3.micro"  # 프리티어 / 비용 절감형 인스턴스
-  allocated_storage      = 20             # 기본 용량 (20GB)
-  max_allocated_storage  = 100            # 스토리지 자동 확장
-  storage_type           = "gp3"
+  identifier            = "ai-travel-mariadb"
+  engine                = "mariadb"
+  engine_version        = "10.11"       # 10.11 최신 안정화 버전
+  instance_class        = "db.t3.micro" # 프리티어 / 비용 절감형 인스턴스
+  allocated_storage     = 20            # 기본 용량 (20GB)
+  max_allocated_storage = 100           # 스토리지 자동 확장
+  storage_type          = "gp3"
 
-  db_name                = "aitravel"
-  username               = "admin"
-  password               = "samadal1!"    # RDS 허용 특수문자(!)로 변경
+  db_name  = "aitravel"
+  username = "admin"
+  password = "samadal1!" # RDS 허용 특수문자(!)로 변경
 
-  multi_az               = true           # Multi-AZ 활성화
+  multi_az               = true # Multi-AZ 활성화
   db_subnet_group_name   = aws_db_subnet_group.rds_subnet_group.name
   vpc_security_group_ids = [aws_security_group.rds_sg.id]
 
-  publicly_accessible    = false          # Private Subnet 격리 유지
-  skip_final_snapshot    = true
-  deletion_protection    = false
+  publicly_accessible = false # Private Subnet 격리 유지
+  skip_final_snapshot = true
+  deletion_protection = false
 
   tags = {
     Name = "ai-travel-mariadb-instance"
