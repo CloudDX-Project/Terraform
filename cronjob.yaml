@@ -1,0 +1,44 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: rds-to-dcloud-backup
+spec:
+  # 매일 새벽 3시(한국 시간 기준)에 실행
+  schedule: "0 3 * * *"
+  timeZone: "Asia/Seoul"
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: backup-worker
+            image: mariadb:10.11
+            command:
+            - /bin/bash
+            - -c
+            - |
+              echo "[$(date)] AWS RDS -> D-Cloud 3팀 DB 동기화 시작..."
+              
+              # 성공했던 동기화 명령어 (비밀번호는 환경변수로 안전하게 주입됨)
+              mysqldump -h ai-travel-mariadb.cj0qaeyy4gqs.ap-northeast-2.rds.amazonaws.com -u admin -p$RDS_PASSWORD --single-transaction --quick aitravel \
+              | mysql -h 211.46.52.165 -P 13306 -u team3 -p$DCLOUD_PASSWORD travel_backup
+              
+              if [ $? -eq 0 ]; then
+                echo "[$(date)] 백업 및 동기화 완벽하게 성공!"
+              else
+                echo "[$(date)] 동기화 실패. 로그를 확인해 주세요."
+                exit 1
+              fi
+            env:
+            - name: RDS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: db-backup-secret
+                  key: rds-password
+            - name: DCLOUD_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: db-backup-secret
+                  key: dcloud-password
+          restartPolicy: OnFailure

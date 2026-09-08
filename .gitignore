@@ -1,7 +1,17 @@
-.terraform/
+# Local .terraform directories
+**/.terraform/*
+
+# .tfstate files
 *.tfstate
 *.tfstate.*
+
+# Crash log files
+crash.log
+crash.*.log
+
+# Ignore any .tfvars files that are generated automatically
 *.tfvars
+<<<<<<< HEAD
 .terraform.lock.hcl
 crash.log
 # Terraform
@@ -14,3 +24,12 @@ terraform.tfvars
 
 # SSH Key
 *.pem
+=======
+*.tfvars.json
+
+# Ignore override files
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+>>>>>>> f1a04b8 (chore: 누락된 인프라 설정 파일 추가 및 저장)
