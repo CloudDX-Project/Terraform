@@ -26,6 +26,16 @@ resource "aws_security_group" "redis_sg" {
     security_groups = [aws_security_group.backend_sg.id]
   }
 
+  ingress {
+    from_port = 6379
+    to_port   = 6379
+    protocol  = "tcp"
+
+    security_groups = [
+      aws_eks_cluster.main.vpc_config[0].cluster_security_group_id
+    ]
+  }
+
   egress {
     from_port   = 0
     to_port     = 0
@@ -37,7 +47,6 @@ resource "aws_security_group" "redis_sg" {
     Name = "ai-travel-redis-sg"
   }
 }
-
 # ==========================================
 # 3. Amazon ElastiCache for Redis 클러스터
 # ==========================================

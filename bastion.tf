@@ -53,6 +53,12 @@ resource "aws_instance" "bastion" {
 
   depends_on = [aws_route_table_association.public_a]
 
+  lifecycle {
+    ignore_changes = [
+      ami
+    ]
+  }
+
   tags = {
     Name = "ai-travel-bastion"
   }

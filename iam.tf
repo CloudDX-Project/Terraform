@@ -4,13 +4,9 @@ resource "aws_iam_user" "jun" {
   tags          = { Role = "Infra" }
 }
 
-<<<<<<< HEAD
-resource "aws_iam_user" "soo" {
-  name          = "soo"
-=======
+
 resource "aws_iam_user" "min" {
-  name = "min"
->>>>>>> f1a04b8 (chore: 누락된 인프라 설정 파일 추가 및 저장)
+  name          = "min"
   force_destroy = true
   tags          = { Role = "DevOps" }
 }

@@ -22,12 +22,12 @@ resource "aws_iam_role_policy_attachment" "eks_cluster_policy" {
 }
 
 # ==========================================
-# 2. Amazon EKS 클러스터 생성
+# 2. Amazon EKS 클러스터
 # ==========================================
 resource "aws_eks_cluster" "main" {
   name     = "ai-travel-eks-cluster"
   role_arn = aws_iam_role.eks_cluster_role.arn
-  version  = "1.30"
+  version  = "1.31"
 
   vpc_config {
     subnet_ids = [
@@ -36,6 +36,7 @@ resource "aws_eks_cluster" "main" {
       aws_subnet.private_a.id,
       aws_subnet.private_b.id
     ]
+
     endpoint_private_access = true
     endpoint_public_access  = true
   }
@@ -43,11 +44,6 @@ resource "aws_eks_cluster" "main" {
   access_config {
     authentication_mode                         = "API_AND_CONFIG_MAP"
     bootstrap_cluster_creator_admin_permissions = true
-  }
-
-  # EKS 버전 롤백 에러 차단
-  lifecycle {
-    ignore_changes = [version]
   }
 
   depends_on = [
@@ -93,14 +89,20 @@ resource "aws_iam_role_policy_attachment" "node_AmazonEC2ContainerRegistryReadOn
 }
 
 # ==========================================
-# 4. EKS 관리형 노드 그룹 (Amazon Linux 2023)
+# 4. EKS 관리형 노드 그룹
 # ==========================================
 resource "aws_eks_node_group" "main_nodes" {
   cluster_name    = aws_eks_cluster.main.name
   node_group_name = "ai-travel-node-group"
   node_role_arn   = aws_iam_role.eks_node_role.arn
 
-  subnet_ids = [aws_subnet.private_a.id, aws_subnet.private_b.id]
+  # Control Plane과 동일하게 1.31로 업그레이드
+  version = "1.31"
+
+  subnet_ids = [
+    aws_subnet.private_a.id,
+    aws_subnet.private_b.id
+  ]
 
   ami_type       = "AL2023_x86_64_STANDARD"
   instance_types = ["t3.large"]
