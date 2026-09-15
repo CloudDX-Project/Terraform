@@ -8,7 +8,6 @@ resource "aws_eks_addon" "vpc_cni" {
   addon_name    = "vpc-cni"
   addon_version = "v1.22.4-eksbuild.3"
 
-  # 기존 self-managed aws-node를 EKS Managed Add-on으로 전환
   resolve_conflicts_on_create = "OVERWRITE"
   resolve_conflicts_on_update = "PRESERVE"
 
@@ -25,9 +24,8 @@ resource "aws_eks_addon" "vpc_cni" {
 resource "aws_eks_addon" "coredns" {
   cluster_name  = aws_eks_cluster.main.name
   addon_name    = "coredns"
-  addon_version = "v1.11.4-eksbuild.51"
+  addon_version = "v1.12.4-eksbuild.31"
 
-  # 기존 self-managed CoreDNS를 Managed Add-on으로 전환
   resolve_conflicts_on_create = "OVERWRITE"
   resolve_conflicts_on_update = "PRESERVE"
 
@@ -44,9 +42,8 @@ resource "aws_eks_addon" "coredns" {
 resource "aws_eks_addon" "kube_proxy" {
   cluster_name  = aws_eks_cluster.main.name
   addon_name    = "kube-proxy"
-  addon_version = "v1.31.14-eksbuild.28"
+  addon_version = "v1.34.6-eksbuild.25"
 
-  # 기존 self-managed kube-proxy를 Managed Add-on으로 전환
   resolve_conflicts_on_create = "OVERWRITE"
   resolve_conflicts_on_update = "PRESERVE"
 

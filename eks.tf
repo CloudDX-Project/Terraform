@@ -27,7 +27,7 @@ resource "aws_iam_role_policy_attachment" "eks_cluster_policy" {
 resource "aws_eks_cluster" "main" {
   name     = "ai-travel-eks-cluster"
   role_arn = aws_iam_role.eks_cluster_role.arn
-  version  = "1.31"
+  version  = "1.34"
 
   vpc_config {
     subnet_ids = [
@@ -97,7 +97,7 @@ resource "aws_eks_node_group" "main_nodes" {
   node_role_arn   = aws_iam_role.eks_node_role.arn
 
   # Control Plane과 동일하게 1.31로 업그레이드
-  version = "1.31"
+  version = "1.34"
 
   subnet_ids = [
     aws_subnet.private_a.id,
