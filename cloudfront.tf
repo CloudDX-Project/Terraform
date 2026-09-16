@@ -17,6 +17,8 @@ resource "aws_cloudfront_distribution" "frontend_distribution" {
   is_ipv6_enabled     = true
   default_root_object = "index.html"
   comment             = "AI Travel Frontend CloudFront Distribution"
+  # AWS WAFv2
+  web_acl_id = aws_wafv2_web_acl.cloudfront.arn
 
   # ==========================================
   # Frontend S3 Origin
@@ -28,9 +30,10 @@ resource "aws_cloudfront_distribution" "frontend_distribution" {
   }
 
   # ==========================================
-  # Backend API ALB Origin
-  # TEMP: 현재 Public ALB 사용
-  # 추후 CloudFront VPC Origin + Internal ALB로 변경
+  # Backend API Public ALB Origin
+  #
+  # 현재 /api/* 실제 트래픽이 사용 중
+  # Internal ALB 전환 완료 후 제거 예정
   # ==========================================
   origin {
     domain_name = "k8s-travel-travelap-640375c8c9-309333113.ap-northeast-2.elb.amazonaws.com"
@@ -48,6 +51,25 @@ resource "aws_cloudfront_distribution" "frontend_distribution" {
         "TLSv1.1",
         "TLSv1.2"
       ]
+    }
+  }
+
+  # ==========================================
+  # Backend API Internal ALB VPC Origin
+  #
+  # 신규 VPC Origin
+  # 현재는 Origin에 등록만 하고
+  # /api/* 트래픽은 아직 Public ALB 사용
+  # ==========================================
+  origin {
+    domain_name = "internal-k8s-travel-travelap-15aff15a50-565043002.ap-northeast-2.elb.amazonaws.com"
+
+    # CloudFront VPC Origin 실제 ID 사용
+    # 현재 값: vo_KUiFEEbSeDxBwUeeL2m01M
+    origin_id = aws_cloudfront_vpc_origin.travel_api.id
+
+    vpc_origin_config {
+      vpc_origin_id = aws_cloudfront_vpc_origin.travel_api.id
     }
   }
 
@@ -77,11 +99,14 @@ resource "aws_cloudfront_distribution" "frontend_distribution" {
 
   # ==========================================
   # Backend API Routing
-  # /api/* -> travel-api ALB
+  #
+  # 중요:
+  # 아직 기존 Public ALB 사용
+  # 다음 단계에서 VPC Origin으로 전환 예정
   # ==========================================
   ordered_cache_behavior {
     path_pattern     = "/api/*"
-    target_origin_id = "travel-api-alb"
+    target_origin_id = aws_cloudfront_vpc_origin.travel_api.id
 
     viewer_protocol_policy = "redirect-to-https"
 
@@ -109,7 +134,9 @@ resource "aws_cloudfront_distribution" "frontend_distribution" {
     compress = true
   }
 
-  # 한국/아시아/미국/유럽 Edge Location 사용
+  # ==========================================
+  # CloudFront Edge Location 범위
+  # ==========================================
   price_class = "PriceClass_200"
 
   restrictions {
@@ -118,8 +145,10 @@ resource "aws_cloudfront_distribution" "frontend_distribution" {
     }
   }
 
+  # ==========================================
   # 현재 CloudFront 기본 인증서 사용
   # 추후 Route53 + ACM 적용 시 변경
+  # ==========================================
   viewer_certificate {
     cloudfront_default_certificate = true
   }

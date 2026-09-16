@@ -1,4 +1,6 @@
+# ==========================================
 # 1. VPC 생성
+# ==========================================
 resource "aws_vpc" "main" {
   cidr_block           = "10.0.0.0/16"
   enable_dns_hostnames = true
@@ -9,7 +11,9 @@ resource "aws_vpc" "main" {
   }
 }
 
+# ==========================================
 # 2. 인터넷 게이트웨이 (IGW)
+# ==========================================
 resource "aws_internet_gateway" "igw" {
   vpc_id = aws_vpc.main.id
 
@@ -18,7 +22,11 @@ resource "aws_internet_gateway" "igw" {
   }
 }
 
-# 3. 퍼블릭 서브넷 2개 (AZ-A, AZ-B)
+# ==========================================
+# 3. 퍼블릭 서브넷 2개
+# ==========================================
+
+# Public Subnet A - ap-northeast-2a
 resource "aws_subnet" "public_a" {
   vpc_id                  = aws_vpc.main.id
   cidr_block              = "10.0.1.0/24"
@@ -26,10 +34,12 @@ resource "aws_subnet" "public_a" {
   map_public_ip_on_launch = true
 
   tags = {
-    Name = "ai-travel-public-subnet-a"
+    Name                     = "ai-travel-public-subnet-a"
+    "kubernetes.io/role/elb" = "1"
   }
 }
 
+# Public Subnet B - ap-northeast-2c
 resource "aws_subnet" "public_b" {
   vpc_id                  = aws_vpc.main.id
   cidr_block              = "10.0.2.0/24"
@@ -37,32 +47,43 @@ resource "aws_subnet" "public_b" {
   map_public_ip_on_launch = true
 
   tags = {
-    Name = "ai-travel-public-subnet-b"
+    Name                     = "ai-travel-public-subnet-b"
+    "kubernetes.io/role/elb" = "1"
   }
 }
 
-# 4. 프라이빗 서브넷 2개 (AZ-A, AZ-B)
+# ==========================================
+# 4. 프라이빗 서브넷 2개
+# ==========================================
+
+# Private Subnet A - ap-northeast-2a
 resource "aws_subnet" "private_a" {
   vpc_id            = aws_vpc.main.id
   cidr_block        = "10.0.10.0/24"
   availability_zone = "ap-northeast-2a"
 
   tags = {
-    Name = "ai-travel-private-subnet-a"
+    Name                              = "ai-travel-private-subnet-a"
+    "kubernetes.io/role/internal-elb" = "1"
   }
 }
 
+# Private Subnet B - ap-northeast-2c
 resource "aws_subnet" "private_b" {
   vpc_id            = aws_vpc.main.id
   cidr_block        = "10.0.20.0/24"
   availability_zone = "ap-northeast-2c"
 
   tags = {
-    Name = "ai-travel-private-subnet-b"
+    Name                              = "ai-travel-private-subnet-b"
+    "kubernetes.io/role/internal-elb" = "1"
   }
 }
 
-# 5. NAT 게이트웨이용 탄력적 IP(EIP) 2개
+# ==========================================
+# 5. NAT Gateway용 Elastic IP 2개
+# ==========================================
+
 resource "aws_eip" "nat_a" {
   domain     = "vpc"
   depends_on = [aws_internet_gateway.igw]
@@ -81,7 +102,11 @@ resource "aws_eip" "nat_b" {
   }
 }
 
-# 6. NAT 게이트웨이 2개 생성 (Public 서브넷에 각각 배치)
+# ==========================================
+# 6. NAT Gateway 2개
+# ==========================================
+
+# NAT Gateway A
 resource "aws_nat_gateway" "nat_a" {
   allocation_id = aws_eip.nat_a.id
   subnet_id     = aws_subnet.public_a.id
@@ -92,6 +117,7 @@ resource "aws_nat_gateway" "nat_a" {
   }
 }
 
+# NAT Gateway B
 resource "aws_nat_gateway" "nat_b" {
   allocation_id = aws_eip.nat_b.id
   subnet_id     = aws_subnet.public_b.id
@@ -102,7 +128,11 @@ resource "aws_nat_gateway" "nat_b" {
   }
 }
 
-# 7. 퍼블릭 라우팅 테이블 & 연결 (0.0.0.0/0 -> IGW)
+# ==========================================
+# 7. Public Route Table
+# 0.0.0.0/0 -> Internet Gateway
+# ==========================================
+
 resource "aws_route_table" "public" {
   vpc_id = aws_vpc.main.id
 
@@ -116,17 +146,23 @@ resource "aws_route_table" "public" {
   }
 }
 
+# Public Subnet A -> Public Route Table
 resource "aws_route_table_association" "public_a" {
   subnet_id      = aws_subnet.public_a.id
   route_table_id = aws_route_table.public.id
 }
 
+# Public Subnet B -> Public Route Table
 resource "aws_route_table_association" "public_b" {
   subnet_id      = aws_subnet.public_b.id
   route_table_id = aws_route_table.public.id
 }
 
-# 8. 프라이빗 라우팅 테이블 A & 연결 (0.0.0.0/0 -> NAT GW A)
+# ==========================================
+# 8. Private Route Table A
+# 0.0.0.0/0 -> NAT Gateway A
+# ==========================================
+
 resource "aws_route_table" "private_a" {
   vpc_id = aws_vpc.main.id
 
@@ -140,12 +176,17 @@ resource "aws_route_table" "private_a" {
   }
 }
 
+# Private Subnet A -> Private Route Table A
 resource "aws_route_table_association" "private_a" {
   subnet_id      = aws_subnet.private_a.id
   route_table_id = aws_route_table.private_a.id
 }
 
-# 9. 프라이빗 라우팅 테이블 B & 연결 (0.0.0.0/0 -> NAT GW B)
+# ==========================================
+# 9. Private Route Table B
+# 0.0.0.0/0 -> NAT Gateway B
+# ==========================================
+
 resource "aws_route_table" "private_b" {
   vpc_id = aws_vpc.main.id
 
@@ -159,6 +200,7 @@ resource "aws_route_table" "private_b" {
   }
 }
 
+# Private Subnet B -> Private Route Table B
 resource "aws_route_table_association" "private_b" {
   subnet_id      = aws_subnet.private_b.id
   route_table_id = aws_route_table.private_b.id
