@@ -131,3 +131,21 @@ output "rds_port" {
   description = "MariaDB port"
   value       = aws_db_instance.mariadb.port
 }
+
+# ==========================================
+# RDS Dedicated DB Subnet Group
+# 현재 MariaDB는 아직 이 그룹으로 이동하지 않음
+# ==========================================
+resource "aws_db_subnet_group" "rds_dedicated_subnet_group" {
+  name        = "ai-travel-rds-dedicated-subnet-group"
+  description = "Dedicated private DB subnets for AI Travel MariaDB"
+
+  subnet_ids = [
+    aws_subnet.db_a.id,
+    aws_subnet.db_b.id
+  ]
+
+  tags = {
+    Name = "ai-travel-rds-dedicated-subnet-group"
+  }
+}

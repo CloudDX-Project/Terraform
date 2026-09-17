@@ -11,6 +11,23 @@ resource "aws_elasticache_subnet_group" "redis_subnet_group" {
 }
 
 # ==========================================
+# Redis Dedicated Cache Subnet Group
+# 현재 Redis는 아직 이 그룹으로 이동하지 않음
+# ==========================================
+resource "aws_elasticache_subnet_group" "redis_dedicated_subnet_group" {
+  name = "ai-travel-redis-dedicated-subnet-group"
+
+  subnet_ids = [
+    aws_subnet.cache_a.id,
+    aws_subnet.cache_b.id
+  ]
+
+  tags = {
+    Name = "ai-travel-redis-dedicated-subnet-group"
+  }
+}
+
+# ==========================================
 # 2. Redis 전용 보안 그룹 (백엔드 SG에서만 6379 포트 허용)
 # ==========================================
 resource "aws_security_group" "redis_sg" {

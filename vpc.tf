@@ -205,3 +205,109 @@ resource "aws_route_table_association" "private_b" {
   subnet_id      = aws_subnet.private_b.id
   route_table_id = aws_route_table.private_b.id
 }
+# ==========================================
+# 10. DB 전용 Private Subnet 2개
+# ==========================================
+
+# DB Private Subnet A - ap-northeast-2a
+resource "aws_subnet" "db_a" {
+  vpc_id                  = aws_vpc.main.id
+  cidr_block              = "10.0.30.0/24"
+  availability_zone       = "ap-northeast-2a"
+  map_public_ip_on_launch = false
+
+  tags = {
+    Name = "ai-travel-db-subnet-a"
+  }
+}
+
+# DB Private Subnet B - ap-northeast-2c
+resource "aws_subnet" "db_b" {
+  vpc_id                  = aws_vpc.main.id
+  cidr_block              = "10.0.40.0/24"
+  availability_zone       = "ap-northeast-2c"
+  map_public_ip_on_launch = false
+
+  tags = {
+    Name = "ai-travel-db-subnet-b"
+  }
+}
+
+
+# ==========================================
+# 11. Cache 전용 Private Subnet 2개
+# ==========================================
+
+# Cache Private Subnet A - ap-northeast-2a
+resource "aws_subnet" "cache_a" {
+  vpc_id                  = aws_vpc.main.id
+  cidr_block              = "10.0.50.0/24"
+  availability_zone       = "ap-northeast-2a"
+  map_public_ip_on_launch = false
+
+  tags = {
+    Name = "ai-travel-cache-subnet-a"
+  }
+}
+
+# Cache Private Subnet B - ap-northeast-2c
+resource "aws_subnet" "cache_b" {
+  vpc_id                  = aws_vpc.main.id
+  cidr_block              = "10.0.60.0/24"
+  availability_zone       = "ap-northeast-2c"
+  map_public_ip_on_launch = false
+
+  tags = {
+    Name = "ai-travel-cache-subnet-b"
+  }
+}
+
+
+# ==========================================
+# 12. DB 전용 Route Table
+# VPC Local 통신만 허용
+# NAT / IGW 경로 없음
+# ==========================================
+
+resource "aws_route_table" "db" {
+  vpc_id = aws_vpc.main.id
+
+  tags = {
+    Name = "ai-travel-db-rt"
+  }
+}
+
+resource "aws_route_table_association" "db_a" {
+  subnet_id      = aws_subnet.db_a.id
+  route_table_id = aws_route_table.db.id
+}
+
+resource "aws_route_table_association" "db_b" {
+  subnet_id      = aws_subnet.db_b.id
+  route_table_id = aws_route_table.db.id
+}
+
+
+# ==========================================
+# 13. Cache 전용 Route Table
+# VPC Local 통신만 허용
+# NAT / IGW 경로 없음
+# ==========================================
+
+resource "aws_route_table" "cache" {
+  vpc_id = aws_vpc.main.id
+
+  tags = {
+    Name = "ai-travel-cache-rt"
+  }
+}
+
+resource "aws_route_table_association" "cache_a" {
+  subnet_id      = aws_subnet.cache_a.id
+  route_table_id = aws_route_table.cache.id
+}
+
+resource "aws_route_table_association" "cache_b" {
+  subnet_id      = aws_subnet.cache_b.id
+  route_table_id = aws_route_table.cache.id
+}
