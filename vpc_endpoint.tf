@@ -40,6 +40,8 @@ resource "aws_security_group" "bedrock_vpce_sg" {
 # 2. Bedrock Runtime VPC Interface Endpoint
 # ==========================================
 resource "aws_vpc_endpoint" "bedrock_runtime" {
+  count = var.enable_bedrock_vpce ? 1 : 0
+
   vpc_id              = aws_vpc.main.id
   service_name        = "com.amazonaws.ap-northeast-2.bedrock-runtime"
   vpc_endpoint_type   = "Interface"
