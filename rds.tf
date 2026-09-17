@@ -1,7 +1,8 @@
 # ==========================================
-# 1. RDS 서브넷 그룹
-# 현재는 Private App Subnet A/B 사용
-# DB 전용 Subnet은 다음 단계에서 분리 예정
+# 1. 기존 RDS Subnet Group
+#
+# 현재 MariaDB가 사용 중인 App Private Subnet A/B
+# Dedicated DB Subnet 마이그레이션 완료 전까지 유지
 # ==========================================
 resource "aws_db_subnet_group" "rds_subnet_group" {
   name        = "ai-travel-rds-subnet-group"
@@ -19,19 +20,47 @@ resource "aws_db_subnet_group" "rds_subnet_group" {
 
 
 # ==========================================
-# 2. RDS 전용 Security Group
-# EKS Worker/Pod -> MariaDB 3306 허용
+# 2. RDS Dedicated DB Subnet Group
+#
+# DB 전용 Private Subnet A/B
+# - 10.0.30.0/24 : ap-northeast-2a
+# - 10.0.40.0/24 : ap-northeast-2c
+#
+# 현재는 생성만 완료된 상태이며,
+# MariaDB는 아직 기존 Subnet Group 사용
+# ==========================================
+resource "aws_db_subnet_group" "rds_dedicated_subnet_group" {
+  name        = "ai-travel-rds-dedicated-subnet-group"
+  description = "Dedicated private DB subnets for AI Travel MariaDB"
+
+  subnet_ids = [
+    aws_subnet.db_a.id,
+    aws_subnet.db_b.id
+  ]
+
+  tags = {
+    Name = "ai-travel-rds-dedicated-subnet-group"
+  }
+}
+
+
+# ==========================================
+# 3. RDS 전용 Security Group
+#
+# EKS Worker / Pod -> MariaDB TCP 3306 허용
 # ==========================================
 resource "aws_security_group" "rds_sg" {
   name = "ai-travel-rds-sg"
 
-  # 기존 SG replacement 방지를 위해 기존 description 유지
+  # 기존 Security Group replacement 방지를 위해
+  # 기존 AWS description 유지
   description = "Allow inbound traffic from Backend only"
 
   vpc_id = aws_vpc.main.id
 
-  # EKS Cluster Security Group에서
-  # MariaDB 3306 접근 허용
+  # ------------------------------------------
+  # EKS Workload -> MariaDB
+  # ------------------------------------------
   ingress {
     description = "MariaDB from EKS workloads"
 
@@ -44,7 +73,9 @@ resource "aws_security_group" "rds_sg" {
     ]
   }
 
-  # Outbound 허용
+  # ------------------------------------------
+  # Outbound
+  # ------------------------------------------
   egress {
     from_port   = 0
     to_port     = 0
@@ -59,8 +90,15 @@ resource "aws_security_group" "rds_sg" {
 
 
 # ==========================================
-# 3. Amazon RDS for MariaDB
+# 4. Amazon RDS for MariaDB
+#
 # Multi-AZ
+#
+# 현재:
+# ai-travel-rds-subnet-group 사용
+#
+# 향후:
+# Dedicated DB Subnet으로 별도 마이그레이션 예정
 # ==========================================
 resource "aws_db_instance" "mariadb" {
   identifier = "ai-travel-mariadb"
@@ -81,7 +119,7 @@ resource "aws_db_instance" "mariadb" {
   storage_type          = "gp3"
 
   # ------------------------------------------
-  # Database Account
+  # Database
   # ------------------------------------------
   db_name  = "aitravel"
   username = "admin"
@@ -96,6 +134,8 @@ resource "aws_db_instance" "mariadb" {
 
   # ------------------------------------------
   # Network
+  #
+  # 현재 운영 중인 기존 Subnet Group 유지
   # ------------------------------------------
   db_subnet_group_name = aws_db_subnet_group.rds_subnet_group.name
 
@@ -107,7 +147,12 @@ resource "aws_db_instance" "mariadb" {
 
   # ------------------------------------------
   # 현재 개발 단계 설정
-  # 추후 Backup / PITR / KMS / Protection 강화 예정
+  #
+  # 추후 강화 예정:
+  # - Automated Backup
+  # - PITR
+  # - KMS Encryption
+  # - Deletion Protection
   # ------------------------------------------
   skip_final_snapshot = true
   deletion_protection = false
@@ -119,8 +164,8 @@ resource "aws_db_instance" "mariadb" {
 
 
 # ==========================================
-# 4. Outputs
-# 백엔드 팀 전달용
+# 5. Outputs
+# Backend 전달용 RDS 연결 정보
 # ==========================================
 output "rds_endpoint" {
   description = "MariaDB endpoint address"
@@ -130,22 +175,4 @@ output "rds_endpoint" {
 output "rds_port" {
   description = "MariaDB port"
   value       = aws_db_instance.mariadb.port
-}
-
-# ==========================================
-# RDS Dedicated DB Subnet Group
-# 현재 MariaDB는 아직 이 그룹으로 이동하지 않음
-# ==========================================
-resource "aws_db_subnet_group" "rds_dedicated_subnet_group" {
-  name        = "ai-travel-rds-dedicated-subnet-group"
-  description = "Dedicated private DB subnets for AI Travel MariaDB"
-
-  subnet_ids = [
-    aws_subnet.db_a.id,
-    aws_subnet.db_b.id
-  ]
-
-  tags = {
-    Name = "ai-travel-rds-dedicated-subnet-group"
-  }
 }
