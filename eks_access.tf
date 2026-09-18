@@ -6,6 +6,7 @@ locals {
     "arn:aws:iam::782913119640:user/jun",  # 인프라 담당
     "arn:aws:iam::782913119640:user/min",  # 데브옵스/CI/CD 담당
     "arn:aws:iam::782913119640:user/chan", # 백엔드 개발 담당
+    "arn:aws:iam::782913119640:user/woo",  # 프론트 개발 담당
   ]
 }
 
