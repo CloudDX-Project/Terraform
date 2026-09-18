@@ -146,13 +146,25 @@ resource "aws_db_instance" "mariadb" {
   publicly_accessible = false
 
   # ------------------------------------------
+  # Backup / Recovery
+  # ------------------------------------------
+
+  # Automated Backup + PITR
+  # 최근 7일 이내 특정 시점으로 복구 가능
+  backup_retention_period = 7
+
+  # 현재 AWS에 설정된 Backup Window 유지
+  backup_window = "15:30-16:00"
+
+  # RDS 태그를 Snapshot에도 복사
+  copy_tags_to_snapshot = true
+
+
+  # ------------------------------------------
   # 현재 개발 단계 설정
   #
-  # 추후 강화 예정:
-  # - Automated Backup
-  # - PITR
-  # - KMS Encryption
-  # - Deletion Protection
+  # KMS Encryption / Deletion Protection은
+  # 별도 단계에서 적용 검토
   # ------------------------------------------
   skip_final_snapshot = true
   deletion_protection = false
