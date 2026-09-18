@@ -75,3 +75,21 @@ resource "aws_iam_role_policy" "external_secrets_read" {
     ]
   })
 }
+
+# ============================================================
+# EKS Pod Identity Association
+#
+# External Secrets Operator must use:
+#
+# Namespace      : external-secrets
+# ServiceAccount : external-secrets
+#
+# DevOps must install the operator using these exact names.
+# ============================================================
+
+resource "aws_eks_pod_identity_association" "external_secrets" {
+  cluster_name    = "ai-travel-eks-cluster"
+  namespace       = "external-secrets"
+  service_account = "external-secrets"
+  role_arn        = aws_iam_role.external_secrets.arn
+}
